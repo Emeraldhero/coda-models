@@ -38,9 +38,9 @@ def normalize_color(color):
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default='cfgs/da-coda-coda_models/waymocenterhead/pvrcnn_allclass32full_finetune_headfull.yaml',
+    parser.add_argument('--cfg_file', type=str, default='cfgs/da-coda-coda_models/waymocenterhead/pvrcnn_allclass128full_finetune_headfull.yaml',
                         help='specify the config for demo')
-    parser.add_argument('--pc', '--point_cloud_topic', type=str, default='/coda/ouster/points',
+    parser.add_argument('--pc', '--point_cloud_topic', type=str, default='/ouster/points',
                         help='specify the point cloud ros topic name')
     parser.add_argument('--ckpt', type=str, default='../ckpts/coda128_allclass_bestoracle.pth', help='specify the pretrained model')
 
@@ -102,7 +102,7 @@ def point_cloud_callback(msg):
 def main():
     args, cfg = parse_config()
     logger = common_utils.create_logger()
-    logger.info('-----------------ROS Demo of OpenPCDet-------------------------')
+    logger.info('-----------------Real Time LiDAR Detection-------------------------')
 
     # 1. Fill in dummy dataset to set point features values
     dummy_dataset = DemoDataset(
@@ -128,14 +128,14 @@ def main():
     # 4. Load dummy data to speed up the first pass
     dummy_pc = np.random.rand(1000, 3).astype(np.float32)
     dummy_data_dict = V.pcnp_to_datadict(dummy_pc, dummy_dataset, frame_id=0)
-    with torch.no_grad():  # Avoid unnecessary gradient computation
+    with torch.no_grad():
         pred_dicts, _ = model.forward(dummy_data_dict)
 
     logger.info("Model initialized...")
     while not rospy.is_shutdown():
         if not pc_msg_queue.empty():
             pc_msg = pc_msg_queue.get()
-            with torch.no_grad():  # Avoid unnecessary gradient computation
+            with torch.no_grad():  
                 V.visualize_3d(model, dummy_dataset, pc_msg, bbox_3d_pub, color_map, logger)
 
     logger.info("Demo complete, cleaning up...")
